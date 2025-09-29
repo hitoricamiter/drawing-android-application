@@ -3,6 +3,7 @@ package ru.zaikin.drawingapplication
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 
@@ -15,6 +16,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private lateinit var drawCanvas: Canvas
     private lateinit var canvasBitmap: Bitmap
     private var brushSize: Float = 20f
+    private val paths = mutableListOf<FingerPath>()
 
     init {
         setUpDrawing()
@@ -38,11 +40,19 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(canvasBitmap, 0f, 0f, canvasPaint)
-        if (!drawPath.isEmpty) {
+
+
+        for (path in paths) {
             drawPaint.color = drawPath.color
-            drawPaint.strokeWidth = drawPath.brushThickness
-            canvas.drawPath(drawPath, drawPaint)
+            drawPaint.strokeWidth = path.brushThickness
+            canvas.drawPath(path, drawPaint)
         }
+
+        /*if (!drawPath.isEmpty) {
+            drawPaint.color = drawPath.color
+            drawPaint.strokeWidth = path.brushThickness
+            canvas.drawPath(drawPath, drawPaint)
+        }*/
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -64,6 +74,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             MotionEvent.ACTION_UP -> {
                 drawCanvas.drawPath(drawPath, drawPaint)
                 drawPath = FingerPath(color, brushSize)
+                paths.add(drawPath)
             }
 
             else -> return false
@@ -71,6 +82,15 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         invalidate()
         return true
+    }
+
+    fun changeBrushSize(newSize: Float) {
+        brushSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            newSize, resources.displayMetrics
+        )
+
+        drawPaint.strokeWidth = brushSize
     }
 
     internal inner class FingerPath(var color: Int, var brushThickness: Float) : Path()
